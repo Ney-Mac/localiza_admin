@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useEffect } from 'react';
 import Head from 'next/head';
 import NextLink from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -8,11 +8,8 @@ import {
 	Alert,
 	Box,
 	Button,
-	FormHelperText,
 	Link,
 	Stack,
-	Tab,
-	Tabs,
 	TextField,
 	Typography
 } from '@mui/material';
@@ -24,8 +21,8 @@ const Page = () => {
 	const auth = useAuth();
 	const formik = useFormik({
 		initialValues: {
-			email: 'demo@devias.io',//
-			password: 'Password123!',//
+			email: '',
+			password: '',
 			submit: null
 		},
 		validationSchema: Yup.object({
@@ -45,11 +42,22 @@ const Page = () => {
 				router.push('/');
 			} catch (err) {
 				helpers.setStatus({ success: false });
-				helpers.setErrors({ submit: err.message });
+				helpers.setErrors({ submit: err.response? err.response.data.message : err.message });
 				helpers.setSubmitting(false);
 			}
 		}
 	});
+
+	useEffect(
+		() => {
+			if(auth.isAuthenticated) {
+				router.replace({
+					pathname: '/'
+				});
+			}
+		},
+		[]
+	)
 
 	return (
 		<>
@@ -108,7 +116,7 @@ const Page = () => {
 									error={!!(formik.touched.email && formik.errors.email)}
 									fullWidth
 									helperText={formik.touched.email && formik.errors.email}
-									label="Email ou Telefone"
+									label="Email"
 									name="email"
 									onBlur={formik.handleBlur}
 									onChange={formik.handleChange}

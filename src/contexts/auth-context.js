@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useReducer, useRef } from 'react';
 import PropTypes from 'prop-types';
+import axios from 'axios';
+import { BASE_URL } from 'src/config';
 
 const HANDLERS = {
 	INITIALIZE: 'INITIALIZE',
@@ -72,21 +74,16 @@ export const AuthProvider = (props) => {
 
 		initialized.current = true;
 
-		let isAuthenticated = false;
+		let user = null;
 
 		try {
-			isAuthenticated = window.sessionStorage.getItem('authenticated') === 'true';
+			user = window.localStorage.getItem('userInfo');
 		} catch (err) {
 			console.error(err);
 		}
 
-		if (isAuthenticated) {
-			const user = {
-				id: '5e86809283e28b96d2d38537',
-				avatar: '/assets/avatars/avatar-anika-visser.png',
-				name: 'Anika Visser',
-				email: 'anika.visser@devias.io'
-			};
+		if (user) {
+			user = JSON.parse(user); 
 
 			dispatch({
 				type: HANDLERS.INITIALIZE,
@@ -107,55 +104,37 @@ export const AuthProvider = (props) => {
 		[]
 	);
 
-	const skip = () => {
-		try {
-			window.sessionStorage.setItem('authenticated', 'true');
-		} catch (err) {
-			console.error(err);
-		}
-
-		const user = {
-			id: '5e86809283e28b96d2d38537',
-			avatar: '/assets/avatars/avatar-anika-visser.png',
-			name: 'Anika Visser',
-			email: 'anika.visser@devias.io'
-		};
-
-		dispatch({
-			type: HANDLERS.SIGN_IN,
-			payload: user
-		});
-	};
-
 	const signIn = async (email, password) => {
-		if (email !== 'demo@devias.io' || password !== 'Password123!') {
-			throw new Error('Please check your email and password');
+		const res = await axios({
+			method: 'post',
+			url: `${BASE_URL}user/login`,
+			data: {
+				login: email,
+				password,
+			}
+		});
+		const user = await res.data.data;
+
+		if(user.user.roles[0].name !== 'admin') {
+			throw new Error('Sua conta não é de um administrador. Use o aplicativo para telefone.');
 		}
 
 		try {
 			window.sessionStorage.setItem('authenticated', 'true');
+			window.localStorage.setItem('userInfo', JSON.stringify(res.data.data));
 		} catch (err) {
 			console.error(err);
 		}
-
-		const user = {
-			id: '5e86809283e28b96d2d38537',
-			avatar: '/assets/avatars/avatar-anika-visser.png',
-			name: 'Anika Visser',
-			email: 'anika.visser@devias.io'
-		};
 
 		dispatch({
 			type: HANDLERS.SIGN_IN,
 			payload: user
 		});
-	};
-
-	const signUp = async (email, name, password) => {
-		throw new Error('Sign up is not implemented');
 	};
 
 	const signOut = () => {
+		window.localStorage.removeItem('userInfo');
+
 		dispatch({
 			type: HANDLERS.SIGN_OUT
 		});
@@ -165,9 +144,7 @@ export const AuthProvider = (props) => {
 		<AuthContext.Provider
 			value={{
 				...state,
-				skip,
 				signIn,
-				signUp,
 				signOut
 			}}
 		>
