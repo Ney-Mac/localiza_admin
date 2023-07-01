@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
+import { useCallback, useState, useRef, useEffect } from 'react';
 import Head from 'next/head';
 import axios from 'axios';
 import { BASE_URL } from 'src/config';
@@ -8,8 +8,8 @@ import PlusIcon from '@heroicons/react/24/solid/PlusIcon';
 import { Box, Button, Container, Stack, SvgIcon, Typography } from '@mui/material';
 import { useSelection } from 'src/hooks/use-selection';
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
-import { UsersTable } from 'src/sections/customer/users-table';
-import { CustomersSearch } from 'src/sections/customer/customers-search';
+import { Table } from 'src/sections/table/table';
+import { CustomersSearch } from 'src/sections/table/customers-search';
 import { applyPagination } from 'src/utils/apply-pagination';
 import { useAuth } from 'src/hooks/use-auth';
 
@@ -148,7 +148,7 @@ const Page = () => {
 						</Stack>
 						<CustomersSearch />
 						{(data && usersPerPage) && (
-							<UsersTable
+							<Table
 								count={data.length}
 								items={usersPerPage}
 								onDeselectAll={usersSelection.handleDeselectAll}
@@ -160,6 +160,34 @@ const Page = () => {
 								page={page}
 								rowsPerPage={rowsPerPage}
 								selected={usersSelection.selected}
+								tableHeaders={[
+									'Id',
+									'Nome',
+									'Email',
+									'Telefone',
+									'Email Verificado Em',
+									'Endereço',
+									'Estado',
+									'Criado Em',
+									'Actualizado Em',
+									'Fim de Periodo de Utilização',
+									'Tipo de Operação de Pagamento',
+									'Pagamento Verificado'
+								]}
+								keys={[
+									'id',
+									'name',
+									'email',
+									'telefone',
+									'email_verificated_at',
+									'endereco',
+									'status',
+									'created_at',
+									'updated_at',
+									'fim_periodo_utilizacao',
+									'tipo_operacao_pagamento',
+									'pagamento_verificado'
+								]}
 							/>
 						)}
 					</Stack>

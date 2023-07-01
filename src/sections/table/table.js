@@ -3,7 +3,7 @@ import {
 	Box,
 	Card,
 	Checkbox,
-	Table,
+	Table as MuiTable,
 	TableBody,
 	TableCell,
 	TableHead,
@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { Scrollbar } from 'src/components/scrollbar';
 
-export const UsersTable = (props) => {
+export const Table = (props) => {
 	const {
 		count = 0,
 		items = [],
@@ -24,7 +24,9 @@ export const UsersTable = (props) => {
 		onSelectOne,
 		page = 0,
 		rowsPerPage = 0,
-		selected = []
+		selected = [],
+		tableHeaders = [],
+		keys = [],
 	} = props;
 
 	const selectedSome = (selected.length > 0) && (selected.length < items.length);
@@ -34,7 +36,7 @@ export const UsersTable = (props) => {
 		<Card>
 			<Scrollbar>
 				<Box sx={{ minWidth: 800 }}>
-					<Table>
+					<MuiTable>
 						<TableHead>
 							<TableRow>
 								<TableCell padding="checkbox">
@@ -50,52 +52,23 @@ export const UsersTable = (props) => {
 										}}
 									/>
 								</TableCell>
-								<TableCell>
-									Id
-								</TableCell>
-								<TableCell>
-									Nome
-								</TableCell>
-								<TableCell>
-									Email
-								</TableCell>
-								<TableCell>
-									Telefone
-								</TableCell>
-								<TableCell>
-									Email Verificado Em
-								</TableCell>
-								<TableCell>
-									Endereço
-								</TableCell>
-								<TableCell>
-									Estado
-								</TableCell>
-								<TableCell>
-									Criado Em
-								</TableCell>
-								<TableCell>
-									Actualizado Em
-								</TableCell>
-								<TableCell>
-									Fim de Periodo de Utilização
-								</TableCell>
-								<TableCell>
-									Tipo de Operação de Pagamento
-								</TableCell>
-								<TableCell>
-									Pagamento Verificado
-								</TableCell>
+								{tableHeaders.map((header) => (
+									<TableCell
+										key={header}
+									>
+										{header}
+									</TableCell>
+								))}
 							</TableRow>
 						</TableHead>
 						<TableBody>
-							{items.map((user) => {
-								const isSelected = selected.includes(user.id);
+							{items.map((item) => {
+								const isSelected = selected.includes(item.id);
 
 								return (
 									<TableRow
 										hover
-										key={user.id}
+										key={item.id}
 										selected={isSelected}
 									>
 										<TableCell padding="checkbox">
@@ -103,51 +76,25 @@ export const UsersTable = (props) => {
 												checked={isSelected}
 												onChange={(event) => {
 													if (event.target.checked) {
-														onSelectOne?.(user.id);
+														onSelectOne?.(item.id);
 													} else {
-														onDeselectOne?.(user.id);
+														onDeselectOne?.(item.id);
 													}
 												}}
 											/>
 										</TableCell>
-										<TableCell>
-											{user.id}
-										</TableCell>
-										<TableCell>
-											{user.name}
-										</TableCell>
-										<TableCell>
-											{user.email}
-										</TableCell>
-										<TableCell>
-											{user.telefone}
-										</TableCell>
-										<TableCell>
-											{user.email_verificated_at}
-										</TableCell>
-										<TableCell>
-											{user.endereco}
-										</TableCell>
-										<TableCell>
-											{user.created_at}
-										</TableCell>
-										<TableCell>
-											{user.updated_at}
-										</TableCell>
-										<TableCell>
-											{user.fim_periodo_utilizacao}
-										</TableCell>
-										<TableCell>
-											{user.tipo_operacao_pagamento}
-										</TableCell>
-										<TableCell>
-											{user.pagamento_verificado}
-										</TableCell>
+										{keys.map(key => (
+											<TableCell
+												key={key}
+											>
+												{item[key]}
+											</TableCell>
+										))}
 									</TableRow>
 								);
 							})}
 						</TableBody>
-					</Table>
+					</MuiTable>
 				</Box>
 			</Scrollbar>
 			<TablePagination
@@ -163,7 +110,7 @@ export const UsersTable = (props) => {
 	);
 };
 
-UsersTable.propTypes = {
+Table.propTypes = {
 	count: PropTypes.number,
 	items: PropTypes.array,
 	onDeselectAll: PropTypes.func,
@@ -174,5 +121,7 @@ UsersTable.propTypes = {
 	onSelectOne: PropTypes.func,
 	page: PropTypes.number,
 	rowsPerPage: PropTypes.number,
-	selected: PropTypes.array
+	selected: PropTypes.array,
+	tableHeaders: PropTypes.array,
+	keys: PropTypes.array
 };

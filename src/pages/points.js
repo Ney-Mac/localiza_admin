@@ -1,61 +1,39 @@
+import { useEffect, useRef, useState, useCallback } from "react";
 import Head from "next/head";
 import axios from "axios";
-import { Box, Container, Unstable_Grid as Grid } from "@mui/system";
+import { Box, Button, Container, Stack, Typography, SvgIcon } from "@mui/material";
 import { Layout as DashboardLayout } from "src/layouts/dashboard/layout";
+import PlusIcon from '@heroicons/react/24/solid/PlusIcon';
+import { useSelection } from "src/hooks/use-selection";
+import { Table } from "src/sections/table/table";
+import { applyPagination } from "src/utils/apply-pagination";
 import { BASE_URL } from "src/config";
 import { useAuth } from "src/hooks/use-auth";
-import { useEffect, useRef } from "react";
-import { DataGrid } from "@mui/x-data-grid";
-
-const columns = [
-    { field: 'id', headerName: 'ID', width: 90 },
-    {
-        field: 'firstName',
-        headerName: 'First name',
-        width: 150,
-        editable: true,
-    },
-    {
-        field: 'lastName',
-        headerName: 'Last name',
-        width: 150,
-        editable: true,
-    },
-    {
-        field: 'age',
-        headerName: 'Age',
-        type: 'number',
-        width: 110,
-        editable: true,
-    },
-    {
-        field: 'fullName',
-        headerName: 'Full name',
-        description: 'This column has a value getter and is not sortable.',
-        sortable: false,
-        width: 160,
-        valueGetter: (params) =>
-            `${params.row.firstName || ''} ${params.row.lastName || ''}`,
-    },
-];
-
-const rows = [
-    { id: 1, lastName: 'Snow', firstName: 'Jon', age: 35 },
-    { id: 2, lastName: 'Lannister', firstName: 'Cersei', age: 42 },
-    { id: 3, lastName: 'Lannister', firstName: 'Jaime', age: 45 },
-    { id: 4, lastName: 'Stark', firstName: 'Arya', age: 16 },
-    { id: 5, lastName: 'Targaryen', firstName: 'Daenerys', age: null },
-    { id: 6, lastName: 'Melisandre', firstName: null, age: 150 },
-    { id: 7, lastName: 'Clifford', firstName: 'Ferrara', age: 44 },
-    { id: 8, lastName: 'Frances', firstName: 'Rossini', age: 36 },
-    { id: 9, lastName: 'Roxie', firstName: 'Harvey', age: 65 },
-];
 
 const Page = () => {
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [data, setData] = useState(null);
+    const [pointsPerPage, setPointsPerPage] = useState(null);
+    const [pointsIds, setPointsIds] = useState(null);
     const { user } = useAuth();
     const initialized = useRef(false);
+    const pointsSelection = useSelection(pointsIds);
 
-    const fetchPoints = async () => {
+    useEffect(
+        () => {
+            if (data) {
+                const pagination = applyPagination(data, page, rowsPerPage);
+                setPointsPerPage(pagination);
+
+                const result = pagination.map((point) => point.id);
+                setPointsIds(result);
+            }
+        },
+        [data, page, rowsPerPage]
+    )
+
+    const fetchPoints = async (status = '', type = '', enabled = '') => {
         if (initialized.current) {
             return;
         }
@@ -64,20 +42,20 @@ const Page = () => {
 
         try {
             const res = await axios({
-                url: `${BASE_URL}listar-pontos`,
+                url: `${BASE_URL}interno/listar-pontos`,
                 method: 'get',
                 headers: {
                     Authorization: `Bearer ${user.accessToken}`,
                 },
                 params: {
-                    status: '1',
-                    type: '',
-                    enabled: '1',
+                    status,
+                    type,
+                    enabled,
                 }
             });
 
             console.log(res.data.data);
-
+            setData(res.data.data);
         } catch (err) {
             console.log(`fetchPoints error ${err} -> ${err.response?.data.message}`);
         }
@@ -88,7 +66,22 @@ const Page = () => {
             fetchPoints();
         },
         []
-    )
+    );
+
+    const handlePageChange = useCallback(
+        (event, value) => {
+            setPage(value);
+        },
+        []
+    );
+
+    const handleRowsPerPageChange = useCallback(
+        (event) => {
+            setRowsPerPage(event.target.value);
+            setPage(0);
+        },
+        []
+    );
 
     return (
         <>
@@ -105,20 +98,70 @@ const Page = () => {
                 }}
             >
                 <Container maxWidth="xl">
-                    <DataGrid
-                        rows={rows}
-                        columns={columns}
-                        initialState={{
-                            pagination: {
-                                paginationModel: {
-                                    pageSize: 5,
-                                },
-                            },
-                        }}
-                        pageSizeOptions={[5]}
-                        checkboxSelection
-                        disableRowSelectionOnClick
-                    />
+                    <Stack spacing={3}>
+                        <Stack
+                            direction="row"
+                            justifyContent="space-between"
+                            spacing={4}
+                        >
+                            <Stack spacing={1}>
+                                <Typography variant="h4">
+                                    Pontos
+                                </Typography>
+                            </Stack>
+                            <div>
+                                <Button
+                                    startIcon={(
+                                        <SvgIcon fontSize="small">
+                                            <PlusIcon />
+                                        </SvgIcon>
+                                    )}
+                                    variant="contained"
+                                >
+                                    Adicionar Ponto
+                                </Button>
+                            </div>
+                        </Stack>
+                        {(data && pointsPerPage) && (
+                            <Table
+                                count={data.length}
+                                items={pointsPerPage}
+                                onDeselectAll={pointsSelection.handleDeselectAll}
+                                onDeselectOne={pointsSelection.handleDeselectOne}
+                                onPageChange={handlePageChange}
+                                onRowsPerPageChange={handleRowsPerPageChange}
+                                onSelectAll={pointsSelection.handleSelectAll}
+                                onSelectOne={pointsSelection.handleSelectOne}
+                                page={page}
+                                rowsPerPage={rowsPerPage}
+                                selected={pointsSelection.selected}
+                                tableHeaders={[
+                                    'Id',
+                                    'Localidade',
+                                    'Latitude',
+                                    'Longitude',
+                                    'Tipo',
+                                    'Estado',
+                                    'Habilitado',
+                                    'Data de Criação',
+                                    'Data de Actualização',
+                                    'Estado da Fila'
+                                ]}
+                                keys={[
+                                    'id',
+                                    'location',
+                                    'latitude',
+                                    'longitude',
+                                    'type',
+                                    'status',
+                                    'enabled',
+                                    'created_at',
+                                    'updated_at',
+                                    'fila'
+                                ]}
+                            />
+                        )}
+                    </Stack>
                 </Container>
             </Box>
         </>
